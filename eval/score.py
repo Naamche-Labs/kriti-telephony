@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Score a hypothesis file against the NepTel reference set.
 
-This reproduces the official NepTel metric: word-level Levenshtein on normalized
-text, with a speaking-rate gate that drops any reference implying >6 words/sec
-(transcription-engine hallucinations). It uses the *official* normalizer and
-references from the NepaliConformer repo so numbers match to the decimal.
+This mirrors the official NepTel scorer (`eval/score_reference.py` in the
+NepaliConformer repo): it skips excluded segments, applies the >6 words/sec
+speaking-rate gate on the raw reference text, normalizes both sides, and computes
+word-level Levenshtein. It uses the official normalizer and references so numbers
+match the official tool to the decimal.
 
 Setup (one-time):
     git clone https://github.com/Ampixa/nepaliconformer  ../nepaliconformer
@@ -15,7 +16,7 @@ Usage:
     python eval/score.py --hyp <file> --refs ../nepaliconformer/benchmark/references.json
 
 A hypothesis file is a JSON list: [{"seg": "seg_0000.wav", "text": "..."}, ...]
-No GPU or model required, this scores committed per-segment outputs directly.
+No GPU or model required; this scores committed per-segment outputs directly.
 """
 import argparse, json, os, sys
 
@@ -23,7 +24,6 @@ MAX_WORDS_PER_SEC = 6.0
 
 
 def load_normalizer(nc_repo):
-    """Import the official NepTel normalizer from a NepaliConformer checkout."""
     asr_dir = os.path.join(nc_repo, "asr")
     if not os.path.isdir(asr_dir):
         sys.exit(
@@ -36,21 +36,32 @@ def load_normalizer(nc_repo):
     return normalize
 
 
+def load_refs(manifest, normalize):
+    """Exact port of the official scorer's segment selection."""
+    man = json.load(open(manifest, encoding="utf-8"))
+    segs = []
+    for m in man["segments"]:
+        if m.get("excluded"):
+            continue
+        if not m.get("reference") and not m.get("chirp2"):
+            continue
+        text = m.get("reference") or m["chirp2"]
+        rate = len(text.split()) / max(float(m.get("dur_s", 0)) or 0.1, 0.1)
+        if rate > MAX_WORDS_PER_SEC:
+            continue
+        segs.append({"seg": m["seg"], "ref": normalize(text)})
+    return segs
+
+
 def wer(ref_words, hyp_words):
     R, H = len(ref_words), len(hyp_words)
-    d = [[0] * (H + 1) for _ in range(R + 1)]
-    for i in range(R + 1):
-        d[i][0] = i
-    for j in range(H + 1):
-        d[0][j] = j
+    d = list(range(H + 1))
     for i in range(1, R + 1):
+        prev, d[0] = d[0], i
         for j in range(1, H + 1):
-            d[i][j] = min(
-                d[i - 1][j] + 1,
-                d[i][j - 1] + 1,
-                d[i - 1][j - 1] + (ref_words[i - 1] != hyp_words[j - 1]),
-            )
-    return d[R][H]
+            cur = min(d[j] + 1, d[j - 1] + 1, prev + (ref_words[i - 1] != hyp_words[j - 1]))
+            prev, d[j] = d[j], cur
+    return d[H]
 
 
 def main():
@@ -62,25 +73,18 @@ def main():
 
     normalize = load_normalizer(a.nc_repo)
     refs_path = a.refs or os.path.join(a.nc_repo, "benchmark", "references.json")
-    segments = json.load(open(refs_path))["segments"]
-    REF = {s["seg"]: s["reference"] for s in segments}
-    DUR = {s["seg"]: s["dur_s"] for s in segments}
+    segs = load_refs(refs_path, normalize)
 
     hyp = {x["seg"]: x["text"] for x in json.load(open(a.hyp))}
 
-    tot_err = tot_ref = scored = gated = 0
-    for seg, reference in REF.items():
-        r = normalize(reference).split()
-        if DUR[seg] > 0 and len(r) / DUR[seg] > MAX_WORDS_PER_SEC:
-            gated += 1
-            continue
-        h = normalize(hyp.get(seg, "")).split()
+    tot_err = tot_ref = 0
+    for s in segs:
+        r = s["ref"].split()
+        h = normalize(" ".join(t for t in hyp.get(s["seg"], "").split() if t != "<breath>")).split()
         tot_err += wer(r, h)
         tot_ref += len(r)
-        scored += 1
 
-    print(f"WER {100.0 * tot_err / tot_ref:.2f}   "
-          f"(scored {scored} segments, {tot_ref} reference words, {gated} rate-gated)")
+    print(f"WER {100.0 * tot_err / tot_ref:.2f}   (scored {len(segs)} segments, {tot_ref} reference words)")
 
 
 if __name__ == "__main__":

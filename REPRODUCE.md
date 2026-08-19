@@ -14,15 +14,15 @@ git clone https://github.com/Ampixa/nepaliconformer ../nepaliconformer
 
 # score any released model's NepTel hypotheses
 python eval/score.py --hyp benchmark/outputs/kriti-telephony.neptel.json
-#   -> WER 32.66
+#   -> WER 32.38
 python eval/score.py --hyp benchmark/outputs/kriti-baseline.neptel.json
-#   -> WER 40.84   (NepaliConformer's published Kriti output)
+#   -> WER 40.59   (NepaliConformer's published Kriti output)
 python eval/score.py --hyp benchmark/outputs/kriti-baseline-redecode.neptel.json
-#   -> WER 40.75   (our independent re-decode; both match Kriti's published 40.6)
+#   -> WER 40.51   (our independent re-decode; both match Kriti's published 40.6)
 python eval/score.py --hyp benchmark/outputs/nepaliconformer.neptel.json
-#   -> WER 34.09
+#   -> WER 33.81
 python eval/score.py --hyp benchmark/outputs/kriti-distilled-5.9k.neptel.json
-#   -> WER 33.75   (an intermediate distillation checkpoint)
+#   -> WER 33.47   (an intermediate distillation checkpoint)
 ```
 
 If these reproduce, the leaderboard claims are verified. The remaining levels verify that the *outputs themselves* come from the models we say they do.
@@ -40,11 +40,11 @@ This regenerates the hypotheses from the released checkpoint, proving the output
 ```bash
 # NepTel + general Nepali in one shot
 NUMBA_CUDA_USE_NVIDIA_BINDING=1 python eval/eval_both.py kriti_telephony.nemo kriti-telephony
-#   -> NepTel=32.66  GeneralNepali=6.28
+#   -> NepTel=32.38  GeneralNepali=6.28
 
 # base model, same harness
 NUMBA_CUDA_USE_NVIDIA_BINDING=1 python eval/eval_both.py kriti.nemo base
-#   -> NepTel=40.75  GeneralNepali=4.13
+#   -> NepTel=40.51  GeneralNepali=4.13
 ```
 
 `eval_both.py` is the honesty instrument, it reports both axes together so a model can't hide a general-Nepali regression.

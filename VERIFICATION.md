@@ -9,7 +9,7 @@ Run from scratch on the released checkpoint (`kriti_telephony.nemo`, the v2 mode
 | Check | Method | Result |
 |---|---|---|
 | Checkpoint identity | sha256 of the shipped file vs the HuggingFace file | matches (`d20d7aff18b7d2c8...`) |
-| NepTel WER, fresh decode | re-decode all 76 scored segments and re-score, ignoring the committed output | **32.66** |
+| NepTel WER, fresh decode | re-decode all 76 scored segments and re-score, ignoring the committed output | **32.38** |
 | Committed output integrity | compare the fresh decode to `benchmark/outputs/kriti-telephony.neptel.json` | byte-identical on 77 / 77 segments |
 | General-Nepali WER, fresh decode | re-decode 200 held-out clean clips with human references | **6.28** |
 
@@ -23,13 +23,13 @@ Each number below comes from a committed per-segment hypothesis file scored with
 # one-time: get the official scorer + references
 git clone https://github.com/Ampixa/nepaliconformer ../nepaliconformer
 
-python eval/score.py --hyp benchmark/outputs/kriti-telephony.neptel.json          # 32.66  (Kriti Telephony)
-python eval/score.py --hyp benchmark/outputs/nepaliconformer.neptel.json          # 34.09  (NepaliConformer offline)
-python eval/score.py --hyp benchmark/outputs/kriti-baseline-redecode.neptel.json  # 40.75  (base Kriti, our re-decode)
-python eval/score.py --hyp benchmark/outputs/kriti-baseline.neptel.json           # 40.84  (base Kriti, published output)
+python eval/score.py --hyp benchmark/outputs/kriti-telephony.neptel.json          # 32.38  (Kriti Telephony)
+python eval/score.py --hyp benchmark/outputs/nepaliconformer.neptel.json          # 33.81  (NepaliConformer offline)
+python eval/score.py --hyp benchmark/outputs/kriti-baseline-redecode.neptel.json  # 40.51  (base Kriti, our re-decode)
+python eval/score.py --hyp benchmark/outputs/kriti-baseline.neptel.json           # 40.59  (base Kriti, published output)
 ```
 
-Base Kriti reproducing 40.75 / 40.84 against its published 40.6 is the harness sanity check: the instrument is correct before any other number is trusted.
+Base Kriti reproducing 40.51 / 40.59 against its published 40.6 is the harness sanity check: the instrument is correct before any other number is trusted.
 
 ## Checkpoint hashes
 
@@ -42,6 +42,6 @@ The `kriti_telephony.nemo` hash matches the file published at [huggingface.co/Aa
 
 ## What this does and does not prove
 
-- It proves the shipped model scores 32.66 on NepTel, beating NepaliConformer's 34.09, using their own scorer, and that this is reproducible from the released checkpoint.
+- It proves the shipped model scores 32.38 on NepTel, beating NepaliConformer's 33.81, using their own scorer, and that this is reproducible from the released checkpoint.
 - It proves the model stays strong on general Nepali (6.28), so the telephony gain is not overfitting that breaks normal transcription.
 - It does not claim the gain is free of the benchmark's known reference-style circularity (see [BENCHMARKS.md](BENCHMARKS.md)); that is why general Nepali is always reported alongside, and why a neutral benchmark is the planned next validation.

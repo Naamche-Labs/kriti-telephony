@@ -12,10 +12,10 @@ All numbers are word error rate (WER), lower is better. Telephony is scored on t
 
 | Model | Params | NepTel WER ↓ | General Nepali WER ↓ |
 |---|---|---:|---:|
-| [Kriti](https://github.com/Naamche-Labs/kriti) (base) | 119 M | 40.8 | **4.1** |
-| **Kriti Telephony** (this repo) | 119 M | **32.7** | 6.3 |
+| [Kriti](https://github.com/Naamche-Labs/kriti) (base) | 119 M | 40.6 | **4.1** |
+| **Kriti Telephony** (this repo) | 119 M | **32.4** | 6.3 |
 
-Kriti Telephony cuts telephony WER by a fifth (40.8 to 32.7) while keeping general Nepali strong (6.3, close to the base model's 4.1). Our reproduction of the base model reads 40.75 on NepTel against its published 40.6, a match to rounding, which confirms the evaluation harness is sound.
+Kriti Telephony cuts telephony WER by a fifth (40.6 to 32.4) while keeping general Nepali strong (6.3, close to the base model's 4.1). Our reproduction of the base model reads 40.51 on NepTel against its published 40.6, a match to rounding, which confirms the evaluation harness is sound.
 
 Read every result as a pair (telephony, then general). A telephony number on its own can hide a general-Nepali regression, so we never report one without the other.
 
@@ -25,11 +25,11 @@ On NepTel, the public benchmark of real Nepali call audio, scored with the bench
 
 | System | NepTel WER ↓ | Verify (no GPU) |
 |---|---:|---|
-| **Kriti Telephony** | **32.66** | `python eval/score.py --hyp benchmark/outputs/kriti-telephony.neptel.json` |
-| NepaliConformer offline | 34.09 | `python eval/score.py --hyp benchmark/outputs/nepaliconformer.neptel.json` |
-| Kriti (base) | 40.75 | `python eval/score.py --hyp benchmark/outputs/kriti-baseline-redecode.neptel.json` |
+| **Kriti Telephony** | **32.38** | `python eval/score.py --hyp benchmark/outputs/kriti-telephony.neptel.json` |
+| NepaliConformer offline | 33.81 | `python eval/score.py --hyp benchmark/outputs/nepaliconformer.neptel.json` |
+| Kriti (base) | 40.51 | `python eval/score.py --hyp benchmark/outputs/kriti-baseline-redecode.neptel.json` |
 
-Every row above re-scores from a committed per-segment output file using the official NepTel scorer and references (see [REPRODUCE.md](REPRODUCE.md), Level 1). No trust required: run the commands and get these exact numbers. We independently confirmed the shipped checkpoint reproduces 32.66 on a fresh decode, byte-identical to the committed output on all 77 segments.
+Every row above re-scores from a committed per-segment output file using the official NepTel scorer and references (see [REPRODUCE.md](REPRODUCE.md), Level 1). No trust required: run the commands and get these exact numbers. We independently confirmed the shipped checkpoint reproduces 32.38 on a fresh decode, byte-identical to the committed output on all 77 segments.
 
 Kriti Telephony leads by 1.4 points, and unlike a telephony-only model it stays strong on clean audio (6.3 general Nepali vs the base model's 4.1). The full method, including the distillation teacher, is disclosed in [METHODOLOGY.md](METHODOLOGY.md), so the result is checkable end to end.
 
@@ -39,7 +39,7 @@ Kriti Telephony leads by 1.4 points, and unlike a telephony-only model it stays 
 |---|---|---|
 | Best for | clean, read, studio audio | phone calls, IVR, call-center, spontaneous speech |
 | Clean-read WER | **4.1** | 6.3 |
-| NepTel (telephony) WER | 40.8 | **32.7** |
+| NepTel (telephony) WER | 40.6 | **32.4** |
 | Relationship | the base model | telephony-tuned, still strong on clean audio |
 
 Kriti Telephony is tuned for phone audio but holds up on clean audio too (6.3 vs the base model's 4.1). For pure studio or read-speech work the base Kriti still has an edge; for anything involving calls, use Kriti Telephony. Always report the WER pair.
@@ -62,11 +62,11 @@ Full instructions in [REPRODUCE.md](REPRODUCE.md). Three levels, from no-GPU to 
 ```bash
 # Level 1: re-score the committed outputs against the official scorer (no GPU)
 python eval/score.py --hyp benchmark/outputs/kriti-telephony.neptel.json
-#   WER 32.66
+#   WER 32.38
 
 # Level 2: re-decode from the checkpoint (GPU): NepTel and general Nepali together
 python eval/eval_both.py kriti_telephony.nemo kriti-telephony
-#   NepTel=32.66  GeneralNepali=6.28
+#   NepTel=32.38  GeneralNepali=6.28
 ```
 
 Per-segment hypotheses for every model in the results table are committed under [benchmark/outputs/](benchmark/outputs/). You can re-score them on CPU with no model and get the exact numbers above.

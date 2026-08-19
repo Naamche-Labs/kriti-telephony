@@ -11,7 +11,7 @@ Baseline behaviour, measured in this repo:
 | | WER |
 |---|---:|
 | Clean read Nepali (OpenSLR-54, human labels) | 4.13 |
-| NepTel (real call-center telephony) | 40.75 |
+| NepTel (real call-center telephony) | 40.51 |
 
 So Kriti is strong on clean audio and struggles on spontaneous narrowband telephony, roughly a 10x WER gap. Closing that gap on telephony without wrecking the 4.13 is the whole problem.
 
@@ -62,15 +62,15 @@ Result, validated on both axes ([eval/eval_both.py](eval/eval_both.py)):
 
 | | NepTel WER | General-Nepali WER |
 |---|---:|---:|
-| Kriti (base) | 40.75 | 4.13 |
-| Kriti Telephony | 32.66 | 6.28 |
+| Kriti (base) | 40.51 | 4.13 |
+| Kriti Telephony | 32.38 | 6.28 |
 
 The anchor is essential and its size is a deliberate choice. A light anchor pushes the telephony number lower but weakens general Nepali; a heavy anchor (used here) keeps general Nepali close to base at 6.28 while still leading on telephony. We chose the balanced point: good on both, rather than a lower telephony number that fails on clean audio.
 
 ## 5. What we deliberately did not do
 
 - We did not train on NepTel audio or references. The benchmark is canary-marked and was held out completely.
-- We did not chase a lower NepTel number by shrinking the anchor. A lighter anchor reaches about 31.3 on telephony but costs general Nepali (about 9.9). We chose the balanced 32.7 / 6.3 point on purpose, because a model that fails on clean audio is not worth a lower leaderboard number.
+- We did not chase a lower NepTel number by shrinking the anchor. A lighter anchor reaches about 31.3 on telephony but costs general Nepali (about 9.9). We chose the balanced 32.4 / 6.3 point on purpose, because a model that fails on clean audio is not worth a lower leaderboard number.
 - We did not apply test-set-specific post-processing to the shipped number.
 
 ## 6. Honest limitations

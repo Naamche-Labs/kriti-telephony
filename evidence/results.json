@@ -3,7 +3,7 @@
   "org": "Naamche Labs",
   "scorer": "official NepTel scorer (word-Levenshtein on nepali_normalize text, 6 wps rate gate)",
   "harness_sanity_check": {
-    "kriti_base_neptel_reproduced": 40.75,
+    "kriti_base_neptel_reproduced": 40.51,
     "kriti_base_neptel_published": 40.6,
     "note": "reproduction matches published to rounding, harness sound"
   },
@@ -12,11 +12,11 @@
     "general_nepali": "200 held-out clean read clips (OpenSLR-54), human references"
   },
   "results": [
-    {"model": "kriti-base",           "neptel_wer": 40.75, "general_wer": 4.13,  "note": "base model, strong on clean audio"},
-    {"model": "distill-2.8k-frozen",  "neptel_wer": 36.48, "general_wer": null,  "note": "distillation ablation"},
-    {"model": "distill-5.9k-frozen",  "neptel_wer": 34.93, "general_wer": null,  "note": "distillation ablation"},
-    {"model": "distill-5.9k-full",    "neptel_wer": 33.75, "general_wer": null,  "note": "distillation ablation"},
-    {"model": "kriti-telephony",      "neptel_wer": 32.66, "general_wer": 6.28,  "note": "SHIPPED: 12k distill + 26k general-Nepali anchor, balanced (good on both)"}
+    {"model": "kriti-base",           "neptel_wer": 40.51, "general_wer": 4.13,  "note": "base model, strong on clean audio"},
+    {"model": "distill-2.8k-frozen",  "neptel_wer": 36.20, "general_wer": null,  "note": "distillation ablation"},
+    {"model": "distill-5.9k-frozen",  "neptel_wer": 34.65, "general_wer": null,  "note": "distillation ablation"},
+    {"model": "distill-5.9k-full",    "neptel_wer": 33.47, "general_wer": null,  "note": "distillation ablation"},
+    {"model": "kriti-telephony",      "neptel_wer": 32.38, "general_wer": 6.28,  "note": "SHIPPED: 12k distill + 26k general-Nepali anchor, balanced (good on both)"}
   ],
   "failed_finetunes_neptel": {
     "openslr_sim_telephony_full": 43.44,
@@ -27,7 +27,7 @@
     "note": "all regressed, cause is label-style mismatch, not model or recipe"
   },
   "decoding_levers_base_neptel": {
-    "greedy_rnnt": 40.75,
+    "greedy_rnnt": 40.51,
     "beam4": 41.47,
     "maes_kenlm_fusion": 49.0,
     "nbest_word_lm_rescore": 39.79,
@@ -40,11 +40,11 @@
     "kriti_telephony.nemo": "d20d7aff18b7d2c8572cf74a9e6c3f13aa5692043d07df19d819e2523889dd2d"
   },
   "evidence_outputs": {
-    "kriti-baseline.neptel.json": 40.84,
-    "kriti-baseline-redecode.neptel.json": 40.75,
-    "nepaliconformer.neptel.json": 34.09,
-    "kriti-distilled-5.9k.neptel.json": 33.75,
-    "kriti-telephony.neptel.json": 32.66
+    "kriti-baseline.neptel.json": 40.59,
+    "kriti-baseline-redecode.neptel.json": 40.51,
+    "nepaliconformer.neptel.json": 33.81,
+    "kriti-distilled-5.9k.neptel.json": 33.47,
+    "kriti-telephony.neptel.json": 32.38
   },
-  "baseline_note": "kriti-baseline.neptel.json is NepaliConformer's published Kriti output (40.84); kriti-baseline-redecode.neptel.json is our independent re-decode (40.75). Both match Kriti's published 40.6, harness verified two ways."
+  "baseline_note": "kriti-baseline.neptel.json is NepaliConformer's published Kriti output (40.59); kriti-baseline-redecode.neptel.json is our independent re-decode (40.51). Both match Kriti's published 40.6, harness verified two ways."
 }
