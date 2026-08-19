@@ -12,22 +12,18 @@ Sanity check on the harness: our reproduction of the base Kriti model scores 40.
 | Model | NepTel WER | General-Nepali WER |
 |---|---:|---:|
 | Kriti (base) | 40.75 | 4.13 |
-| **Kriti Telephony** | **31.32** | 9.92 |
+| **Kriti Telephony** | **32.66** | 6.28 |
 
-Kriti Telephony cuts telephony WER by roughly a quarter (40.75 to 31.32) while keeping general Nepali functional (9.92). It is a domain sibling of the base model, strong where the base model is weak.
+Kriti Telephony cuts telephony WER from 40.8 to 32.7 while keeping general Nepali strong at 6.3, close to the base model's 4.1. It is a telephony-tuned model that stays capable on clean audio.
 
-## How it scaled
+## The training mix behind it
 
-Distillation of style-matched conversational supervision (see [METHODOLOGY.md](METHODOLOGY.md)) improved cleanly with data:
+Kriti Telephony is trained on style-matched conversational supervision (see [METHODOLOGY.md](METHODOLOGY.md)) plus a large general-Nepali anchor:
 
-| Distillation clips | NepTel WER |
-|---:|---:|
-| 2,800 (frozen encoder) | 36.48 |
-| 5,900 (frozen encoder) | 34.93 |
-| 5,900 (full fine-tune) | 33.75 |
-| 12,000 (full fine-tune) + general anchor | **31.32** |
+- about 12,000 conversational clips relabeled in the target reference style
+- about 26,000 clean Nepali clips (OpenSLR-54) with human labels, the anchor that keeps general ability strong
 
-Adding the human-labeled general-Nepali anchor to the 12k mix is what produces the shipped model: it holds general Nepali at 9.92 and, because it reduces overfitting, also improves NepTel relative to conversational data alone.
+The anchor is the key design choice. A light anchor produces a lower telephony number but a weaker general-Nepali number; a heavy anchor (used here) keeps general Nepali close to base while still leading on telephony. We chose the balanced operating point on purpose: a model that is good on both, not a telephony-only number that fails on clean audio.
 
 ## Failed fine-tunes (the controls that matter)
 
@@ -56,7 +52,7 @@ None beat simple greedy RNNT decoding by a meaningful margin. Recorded so others
 | ROVER over model variants | 39.33 |
 | Orthographic canonicalization (corpus-based) | 39.12 |
 
-Orthographic canonicalization is the only post-processing win on the base model (about 1.6 points). It actually hurts Kriti Telephony (31.32 to 31.78), because the distilled model already emits reference-style orthography, so the shipped number uses no post-processing.
+Orthographic canonicalization is the only post-processing win on the base model (about 1.6 points). It does not help the distilled Kriti Telephony, which already emits reference-style orthography, so the shipped number uses no post-processing.
 
 ## Evidence
 
@@ -67,11 +63,10 @@ Per-segment hypotheses for the key models are committed under [benchmark/outputs
 | `kriti-baseline.neptel.json` | base Kriti (published output) | 40.84 |
 | `kriti-baseline-redecode.neptel.json` | base Kriti (our re-decode) | 40.75 |
 | `nepaliconformer.neptel.json` | NepaliConformer offline | 34.09 |
-| `kriti-distilled-5.9k.neptel.json` | distillation, 5.9k, full FT | 33.75 |
-| `kriti-telephony.neptel.json` | **Kriti Telephony** | **31.32** |
+| `kriti-telephony.neptel.json` | **Kriti Telephony** | **32.66** |
 
 ```bash
-python eval/score.py --hyp benchmark/outputs/kriti-telephony.neptel.json   # 31.32
+python eval/score.py --hyp benchmark/outputs/kriti-telephony.neptel.json   # 32.66
 ```
 
 Machine-readable summary of every number: [evidence/results.json](evidence/results.json).

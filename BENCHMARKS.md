@@ -16,7 +16,7 @@ Scores in this repo:
 | System | NepTel WER |
 |---|---:|
 | Kriti (base) | 40.75 |
-| **Kriti Telephony** | **31.32** |
+| **Kriti Telephony** | **32.66** |
 
 ## General Nepali (the honesty check)
 
@@ -28,7 +28,7 @@ Scores in this repo:
 | System | General-Nepali WER |
 |---|---:|
 | Kriti (base) | 4.13 |
-| **Kriti Telephony** | **9.92** |
+| **Kriti Telephony** | **6.28** |
 
 ## Neutral benchmark (in progress)
 

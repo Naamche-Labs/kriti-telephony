@@ -16,7 +16,7 @@
     {"model": "distill-2.8k-frozen",  "neptel_wer": 36.48, "general_wer": null,  "note": "distillation ablation"},
     {"model": "distill-5.9k-frozen",  "neptel_wer": 34.93, "general_wer": null,  "note": "distillation ablation"},
     {"model": "distill-5.9k-full",    "neptel_wer": 33.75, "general_wer": null,  "note": "distillation ablation"},
-    {"model": "kriti-telephony",      "neptel_wer": 31.32, "general_wer": 9.92,  "note": "SHIPPED: 12k distill + general-Nepali anchor"}
+    {"model": "kriti-telephony",      "neptel_wer": 32.66, "general_wer": 6.28,  "note": "SHIPPED: 12k distill + 26k general-Nepali anchor, balanced (good on both)"}
   ],
   "failed_finetunes_neptel": {
     "openslr_sim_telephony_full": 43.44,
@@ -33,18 +33,18 @@
     "nbest_word_lm_rescore": 39.79,
     "rover": 39.33,
     "ortho_canonicalization": 39.12,
-    "note": "ortho canon helps base by about 1.6 but hurts kriti-telephony (31.32 to 31.78); shipped number uses no post-processing"
+    "note": "ortho canon helps base by about 1.6 but does not help the distilled kriti-telephony (already reference-style); shipped number uses no post-processing"
   },
   "checkpoints_sha256": {
     "kriti.nemo":           "0144854f0cc78f4b6115b75089fad632c39207d5256e53f92da996b9bbe43582",
-    "kriti_telephony.nemo": "0a720b4f1145fcb886d1102a4dffd6ac20c40f6c981841f2f52ffb267a2e0b96"
+    "kriti_telephony.nemo": "d20d7aff18b7d2c8572cf74a9e6c3f13aa5692043d07df19d819e2523889dd2d"
   },
   "evidence_outputs": {
     "kriti-baseline.neptel.json": 40.84,
     "kriti-baseline-redecode.neptel.json": 40.75,
     "nepaliconformer.neptel.json": 34.09,
     "kriti-distilled-5.9k.neptel.json": 33.75,
-    "kriti-telephony.neptel.json": 31.32
+    "kriti-telephony.neptel.json": 32.66
   },
   "baseline_note": "kriti-baseline.neptel.json is NepaliConformer's published Kriti output (40.84); kriti-baseline-redecode.neptel.json is our independent re-decode (40.75). Both match Kriti's published 40.6, harness verified two ways."
 }

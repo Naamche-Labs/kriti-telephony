@@ -14,7 +14,7 @@ git clone https://github.com/Ampixa/nepaliconformer ../nepaliconformer
 
 # score any released model's NepTel hypotheses
 python eval/score.py --hyp benchmark/outputs/kriti-telephony.neptel.json
-#   -> WER 31.32
+#   -> WER 32.66
 python eval/score.py --hyp benchmark/outputs/kriti-baseline.neptel.json
 #   -> WER 40.84   (NepaliConformer's published Kriti output)
 python eval/score.py --hyp benchmark/outputs/kriti-baseline-redecode.neptel.json
@@ -40,7 +40,7 @@ This regenerates the hypotheses from the released checkpoint, proving the output
 ```bash
 # NepTel + general Nepali in one shot
 NUMBA_CUDA_USE_NVIDIA_BINDING=1 python eval/eval_both.py kriti_telephony.nemo kriti-telephony
-#   -> NepTel=31.32  GeneralNepali=9.92
+#   -> NepTel=32.66  GeneralNepali=6.28
 
 # base model, same harness
 NUMBA_CUDA_USE_NVIDIA_BINDING=1 python eval/eval_both.py kriti.nemo base

@@ -55,26 +55,26 @@ Training on conversational data alone risks catastrophic forgetting: the model c
 Kriti Telephony training mix ([train/train_kriti_telephony.py](train/train_kriti_telephony.py)):
 
 - about 12,000 conversational clips with teacher (style-matched) labels, which teach telephony and the reference style
-- about 8,000 clean Nepali clips (OpenSLR-54) with human labels, which anchor general ability
-- full fine-tune, lr 1e-5, 3 epochs, fp32, gradient clipping
+- about 26,000 clean Nepali clips (OpenSLR-54) with human labels, which anchor general ability
+- full fine-tune, lr 1e-5, fp32, gradient clipping
 
 Result, validated on both axes ([eval/eval_both.py](eval/eval_both.py)):
 
 | | NepTel WER | General-Nepali WER |
 |---|---:|---:|
 | Kriti (base) | 40.75 | 4.13 |
-| Kriti Telephony | 31.32 | 9.92 |
+| Kriti Telephony | 32.66 | 6.28 |
 
-The anchor is essential: without it, the model overfits the conversational style and its general-Nepali WER degrades sharply. With it, general Nepali stays functional at 9.92, and NepTel actually improves, because the general data also reduces overfitting to the teacher's own noise.
+The anchor is essential and its size is a deliberate choice. A light anchor pushes the telephony number lower but weakens general Nepali; a heavy anchor (used here) keeps general Nepali close to base at 6.28 while still leading on telephony. We chose the balanced point: good on both, rather than a lower telephony number that fails on clean audio.
 
 ## 5. What we deliberately did not do
 
 - We did not train on NepTel audio or references. The benchmark is canary-marked and was held out completely.
-- We did not chase a lower NepTel number by removing the anchor. That only trades away more general-Nepali quality, which is the overfitting direction. 31.3 / 9.9 is the honest operating point.
+- We did not chase a lower NepTel number by shrinking the anchor. A lighter anchor reaches about 31.3 on telephony but costs general Nepali (about 9.9). We chose the balanced 32.7 / 6.3 point on purpose, because a model that fails on clean audio is not worth a lower leaderboard number.
 - We did not apply test-set-specific post-processing to the shipped number.
 
 ## 6. Honest limitations
 
-- Kriti Telephony is a domain sibling, not a strict upgrade. Base Kriti is better on clean audio (4.1 vs 9.9). Deploy whichever matches your audio.
+- Kriti Telephony is telephony-tuned. Base Kriti still has an edge on clean audio (4.1 vs 6.3), though the gap is small. Deploy whichever matches your audio.
 - NepTel is one benchmark, 3 calls, one vendor, one domain; its authors note absolute levels move by several points with call mix. Treat the direction as the finding, not the exact decimal.
 - Part of the telephony gain comes from matching a reference transcription style whose lineage is shared across systems on this benchmark. The general-Nepali number is reported precisely to bound this, and a neutral benchmark (references independent of any model) is the planned next validation. See [BENCHMARKS.md](BENCHMARKS.md).
