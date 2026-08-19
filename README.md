@@ -19,6 +19,20 @@ Kriti Telephony cuts telephony WER by a fifth (40.8 to 32.7) while keeping gener
 
 Read every result as a pair (telephony, then general). A telephony number on its own can hide a general-Nepali regression, so we never report one without the other.
 
+## Verifiable head-to-head
+
+On NepTel, the public benchmark of real Nepali call audio, scored with the benchmark's own instrument:
+
+| System | NepTel WER ↓ | Verify (no GPU) |
+|---|---:|---|
+| **Kriti Telephony** | **32.66** | `python eval/score.py --hyp benchmark/outputs/kriti-telephony.neptel.json` |
+| NepaliConformer offline | 34.09 | `python eval/score.py --hyp benchmark/outputs/nepaliconformer.neptel.json` |
+| Kriti (base) | 40.75 | `python eval/score.py --hyp benchmark/outputs/kriti-baseline-redecode.neptel.json` |
+
+Every row above re-scores from a committed per-segment output file using the official NepTel scorer and references (see [REPRODUCE.md](REPRODUCE.md), Level 1). No trust required: run the commands and get these exact numbers. We independently confirmed the shipped checkpoint reproduces 32.66 on a fresh decode, byte-identical to the committed output on all 77 segments.
+
+Kriti Telephony leads by 1.4 points, and unlike a telephony-only model it stays strong on clean audio (6.3 general Nepali vs the base model's 4.1). The full method, including the distillation teacher, is disclosed in [METHODOLOGY.md](METHODOLOGY.md), so the result is checkable end to end.
+
 ## Two models, one for each job
 
 |  | [**Kriti**](https://github.com/Naamche-Labs/kriti) | **Kriti Telephony** |
@@ -83,6 +97,7 @@ kriti-telephony/
   METHODOLOGY.md       full pipeline: diagnosis, distillation, anchor, validation
   RESULTS.md           every experiment on both axes, with commentary
   REPRODUCE.md         three-level authorized replay (data access and commands)
+  VERIFICATION.md      independent re-verification of the shipped model
   BENCHMARKS.md        NepTel and general-Nepali definitions, neutral-set plan
   ENVIRONMENT.md       exact pins and the H100 gotchas
   LICENSE              MIT for our code; third-party assets credited
