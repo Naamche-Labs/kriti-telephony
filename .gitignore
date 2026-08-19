@@ -1,0 +1,9 @@
+*.nemo
+*.wav
+*.flac
+__pycache__/
+*.pyc
+neptel_audio/
+data/
+venv*/
+.DS_Store
