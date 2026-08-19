@@ -5,7 +5,7 @@ Kriti is a NeMo 1.23-era model built on the **AI4Bharat NeMo fork**, not mainlin
 ## Platform
 - **GPU:** NVIDIA H100 (Hopper, `sm_90`), driver 580
 - **Python:** 3.10.12
-- **NeMo:** AI4Bharat fork, installed editable (`pip install -e '.[runtime]'`) — **not** `nvidia-nemo-toolkit` from PyPI. Mainline NeMo cannot load Kriti (its multilingual tokenizer/joint differ).
+- **NeMo:** AI4Bharat fork, installed editable (`pip install -e '.[runtime]'`), **not** `nvidia-nemo-toolkit` from PyPI. Mainline NeMo cannot load Kriti (its multilingual tokenizer/joint differ).
 
 ## Pinned packages
 ```
@@ -27,7 +27,7 @@ kenlm==0.2.0          # only for the LM-fusion experiments in RESULTS.md
 
 ## The three non-obvious requirements
 
-1. **`NUMBA_CUDA_USE_NVIDIA_BINDING=1` — mandatory on Hopper.** Kriti's RNNT loss is `warprnnt_numba`, a numba-JIT CUDA kernel. numba's own CUDA binding **segfaults** on H100 + driver 580. Forcing NVIDIA's official CUDA bindings fixes it — but only with `cuda-python==12.2.1` (newer cuda-python reorganized its module layout and breaks numba's import; older lacks the API). Always launch training/eval with this env var set.
+1. **`NUMBA_CUDA_USE_NVIDIA_BINDING=1`, mandatory on Hopper.** Kriti's RNNT loss is `warprnnt_numba`, a numba-JIT CUDA kernel. numba's own CUDA binding **segfaults** on H100 + driver 580. Forcing NVIDIA's official CUDA bindings fixes it, but only with `cuda-python==12.2.1` (newer cuda-python reorganized its module layout and breaks numba's import; older lacks the API). Always launch training/eval with this env var set.
 
 2. **`precision=32-true` for training.** The numba RNNT kernel raises `NumbaNotImplementedError` on bfloat16 tensors. Full fp32 avoids it; an H100 has ample memory for a 119M model at batch 16.
 

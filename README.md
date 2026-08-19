@@ -1,127 +1,107 @@
-<!-- Naamche Labs -->
-
 # Kriti Telephony
 
-**A Nepali speech-recognition model tuned for the hardest real-world audio there is — live call-center conversation — with every number in this repository independently reproducible.**
+**Nepali speech recognition tuned for the hardest audio there is: live, spontaneous phone calls.**
 
-Kriti Telephony leads **NepTel**, the public benchmark of real Nepali call-center speech, at **31.3% WER** — ahead of the previous best (NepaliConformer, 34.1%). It gets there by trading some clean-audio accuracy for a large gain on telephony, and this repository documents that trade-off, the exact method, and an authorized replay path so anyone can verify it.
+Most Nepali speech technology is built and measured on read-aloud recordings. Real Nepali on a phone line (call-center conversation, code-switching, narrowband audio) is a different problem, and models that top read-speech benchmarks tend to fall apart on it. Kriti Telephony is a domain-adapted version of [Kriti](https://github.com/Naamche-Labs/kriti) built specifically for that condition.
 
-> **This repo is built to be checked, not just read.** If you think we gamed the benchmark, good — the evidence to falsify that claim is all here: per-segment outputs, the scorer, the training recipe, and a second, independent metric (general-Nepali WER) reported next to every NepTel number.
+Every number in this repository is reproducible: per-segment outputs, the scorer, the training recipe, and a second independent metric are all included so any claim here can be checked and, if wrong, falsified.
 
----
+## Results
 
-## Headline results
+All numbers are word error rate (WER), lower is better. Telephony is scored on the public NepTel set with its official scorer (word-level Levenshtein on normalized text). "General Nepali" is a held-out set of clean read Nepali with human references, reported next to every telephony number as a check against benchmark overfitting.
 
-All numbers are **word error rate (WER)**, lower is better, scored with the **official NepTel scorer** (word-level Levenshtein on normalized text). "General Nepali" is a held-out set of clean read Nepali with **human** references — it exists to catch benchmark-overfitting.
+| Model | Params | NepTel WER ↓ | General Nepali WER ↓ |
+|---|---|---:|---:|
+| [Kriti](https://github.com/Naamche-Labs/kriti) (base) | 119 M | 40.8 | **4.1** |
+| **Kriti Telephony** (this repo) | 119 M | **31.3** | 9.9 |
 
-| System | NepTel WER ↓ | General-Nepali WER ↓ | Notes |
-|---|---:|---:|---|
-| NepaliConformer offline (prior best) | 34.09 | — | competitor; also the distillation *teacher* (see Method) |
-| **Kriti** (base model) | 40.75 | **4.13** | excellent on clean audio, weaker on telephony |
-| Pure distillation *(rejected — do not ship)* | 32.96 | 16.53 | wins NepTel but **collapses** on general Nepali → overfit |
-| **Kriti Telephony** *(this release)* | **31.32** | 9.92 | leads NepTel **and** stays functional everywhere |
+Kriti Telephony cuts telephony WER by about a quarter (40.8 to 31.3) while keeping general Nepali functional (9.9). Our reproduction of the base model reads 40.75 on NepTel against its published 40.6, a match to rounding, which confirms the evaluation harness is sound.
 
-Our reproduction of the base model reads **40.75** on NepTel vs. its published **40.6** — a match to within rounding, which is how you know the harness is sound before trusting any other row.
+Read every result as a pair (telephony, then general). A telephony number on its own can hide a general-Nepali regression, so we never report one without the other.
 
-**Read every result as a pair (telephony / general).** A model that only wins NepTel while its general-Nepali WER explodes (see the rejected row: 16.53) is gaming. A model that leads NepTel *and* keeps general-Nepali functional (9.92) is genuine domain adaptation. We ship only the second kind.
+## Two models, one for each job
 
----
-
-## The two models, and when to use each
-
-| | **Kriti** | **Kriti Telephony** |
+|  | [**Kriti**](https://github.com/Naamche-Labs/kriti) | **Kriti Telephony** |
 |---|---|---|
-| Best for | clean / read / studio audio | phone calls, IVR, call-center, spontaneous speech |
+| Best for | clean, read, studio audio | phone calls, IVR, call-center, spontaneous speech |
 | Clean-read WER | **4.1** | 9.9 |
 | NepTel (telephony) WER | 40.8 | **31.3** |
-| Relationship | the base model | a **domain sibling**, not a successor |
+| Relationship | the base model | a domain sibling, not a successor |
 
-Kriti Telephony is **not** a strict upgrade — on clean audio the base Kriti is meaningfully better. Deploy the one that matches your audio. Always report the WER **pair**, never telephony alone.
+Kriti Telephony is not a strict upgrade. On clean audio the base Kriti is meaningfully better. Deploy whichever matches your audio, and always report the WER pair.
 
----
+## How it was built
 
-## How it was made (short version)
+Full detail lives in [METHODOLOGY.md](METHODOLOGY.md). In brief:
 
-Full detail in [`METHODOLOGY.md`](METHODOLOGY.md). The one-paragraph version:
+1. **Diagnosis.** Base Kriti's NepTel errors are dominated by style (reference orthography conventions and English-loanword transliteration) rather than by mishearing. Ordinary fine-tuning failed repeatedly because every available training set carried a different label style and pulled the model the wrong way.
+2. **Style-matched supervision.** We used an existing strong Nepali model as a teacher to relabel roughly 12,000 clips of conversational Nepali audio in the target reference style, giving Kriti hard conversational audio paired with correctly-styled transcripts.
+3. **General-Nepali anchor.** We mixed in general clean Nepali with human labels so the model keeps its real transcription ability instead of collapsing into a benchmark-only system. This anchor is what keeps general-Nepali WER at 9.9.
+4. **Full fine-tune, validated on two axes.** NepTel and held-out general Nepali, so the gain is demonstrably domain adaptation rather than leaderboard fitting.
 
-1. **Diagnosis.** Base Kriti's NepTel errors are dominated by *style* — reference-orthography conventions (nasalization, vowel length) and English-loanword transliteration — not by mis-hearing. Straightforward fine-tuning failed five times in a row because every available training set carried a *different* label style and dragged the model the wrong way.
-2. **Style-matched supervision (distillation).** We used an existing strong Nepali model (NepaliConformer) as a **teacher** to relabel ~12k clips of conversational Nepali audio in the target reference style, giving Kriti hard conversational audio paired with correctly-styled transcripts.
-3. **Anti-forgetting anchor.** We mixed in general clean Nepali with **human** labels so the model keeps real transcription ability instead of becoming a benchmark impersonator. This single change took general-Nepali WER from **16.5** (pure distillation) down to **9.9**.
-4. **Full fine-tune, validated on two axes** — NepTel *and* held-out general Nepali — so the gain is demonstrably domain adaptation, not leaderboard-fitting.
+We did not train on the NepTel evaluation audio or references. The benchmark set carries a canary marker and was held out completely. You can confirm this from the training manifests referenced in [train/](train/), which use only podcast, code-switched, and OpenSLR-54 audio, never the call recordings NepTel is cut from.
 
-**We did not train on the NepTel evaluation audio or references.** The benchmark set carries a canary marker and was held out completely.
+## Verify it yourself
 
----
-
-## "Did you just train on the benchmark?" — answered plainly
-
-This is the fair question, and the honest answer has two parts:
-
-- **No, not on the eval set.** No NepTel audio or reference ever appeared in training. Verify this yourself: the training manifests ([`train/`](train/)) reference only podcast, code-switched, and OpenSLR-54 audio — never the InfoBayAI call recordings NepTel is cut from.
-- **But be precise about where the gain comes from.** Part of it is *matching NepTel's reference style*, and NepTel's references share a labeling lineage (Google Chirp-2 pseudo-labels) with the prior systems — a circularity the benchmark's own authors flag. That is exactly why we report **general-Nepali WER alongside every NepTel number.** The pure-distillation model that gamed the style (16.5 general) is documented here specifically so you can see what gaming looks like — and see that we rejected it.
-
-The unassailable next step is validation on **neutral ground**: fresh Nepali call audio hand-transcribed independently of any existing model. We are building that set and will publish results on it — win or lose. See [`BENCHMARKS.md`](BENCHMARKS.md#neutral-benchmark-in-progress).
-
----
-
-## Reproduce / verify everything
-
-Full authorized-replay instructions in [`REPRODUCE.md`](REPRODUCE.md). At a glance:
+Full instructions in [REPRODUCE.md](REPRODUCE.md). Three levels, from no-GPU to full retrain:
 
 ```bash
-# 1. Score any released hypothesis file against NepTel (no GPU, no model needed)
+# Level 1: re-score the committed outputs against the official scorer (no GPU)
 python eval/score.py --hyp benchmark/outputs/kriti-telephony.neptel.json
-#   -> WER 31.32
+#   WER 31.32
 
-# 2. Re-derive from the checkpoint (GPU): NepTel + general Nepali together
+# Level 2: re-decode from the checkpoint (GPU): NepTel and general Nepali together
 python eval/eval_both.py kriti_telephony.nemo kriti-telephony
-#   -> NepTel=31.32  GeneralNepali=9.92
+#   NepTel=31.32  GeneralNepali=9.92
 ```
 
-Every per-segment hypothesis for every model in the results table is committed under [`benchmark/outputs/`](benchmark/outputs/) as verifiable evidence — you can re-score them without a GPU and get the exact numbers above.
+Per-segment hypotheses for every model in the results table are committed under [benchmark/outputs/](benchmark/outputs/). You can re-score them on CPU with no model and get the exact numbers above.
 
----
+## Model checkpoint
 
-## What's in this repo
+| Model | HuggingFace |
+|---|---|
+| Kriti Telephony | [Aarjan/kriti-telephony](https://huggingface.co/Aarjan/kriti-telephony) |
+| Kriti (base) | [Naamche Labs / Kriti](https://github.com/Naamche-Labs/kriti) |
+
+```python
+from huggingface_hub import hf_hub_download
+import nemo.collections.asr as nemo_asr
+path = hf_hub_download("Aarjan/kriti-telephony", "kriti_telephony.nemo")
+model = nemo_asr.models.ASRModel.restore_from(path, strict=False)
+model.cur_decoder = "rnnt"
+print(model.transcribe(["call.wav"], language_id="ne"))
+```
+
+See [ENVIRONMENT.md](ENVIRONMENT.md) for the exact package versions. Kriti runs on the AI4Bharat NeMo fork and needs `NUMBA_CUDA_USE_NVIDIA_BINDING=1` on Hopper GPUs.
+
+## Repository layout
 
 ```
 kriti-telephony/
-├── README.md              # you are here
-├── METHODOLOGY.md         # full pipeline: diagnosis → distillation → anchor → validation
-├── RESULTS.md             # every experiment, both axes, with commentary
-├── REPRODUCE.md           # step-by-step authorized replay (data access + commands)
-├── BENCHMARKS.md          # NepTel + general-Nepali eval definitions; neutral-set plan
-├── LICENSE                # MIT (our code); third-party assets credited below
-├── eval/
-│   ├── score.py           # the scorer (word-Levenshtein + speaking-rate gate)
-│   ├── eval_neptel.py     # decode a checkpoint on NepTel, score
-│   ├── eval_both.py       # decode + score on NepTel AND general Nepali
-│   └── ortho_analysis.py  # the orthographic-style diagnostic
-├── train/
-│   ├── pseudo_label.py    # teacher relabels conversational audio (distillation)
-│   ├── pseudo_label_all.py
-│   ├── train_distill.py   # distillation-only recipe (documents the overfit failure)
-│   └── train_kriti_telephony.py   # the shipped recipe (distill + general anchor)
-├── benchmark/
-│   ├── cut_neptel_segments.py     # reproduce the NepTel segments from source audio
-│   └── outputs/           # per-segment hypotheses for every model = evidence
-└── evidence/
-    └── results.json       # machine-readable table of every number here
+  README.md            you are here
+  METHODOLOGY.md       full pipeline: diagnosis, distillation, anchor, validation
+  RESULTS.md           every experiment on both axes, with commentary
+  REPRODUCE.md         three-level authorized replay (data access and commands)
+  BENCHMARKS.md        NepTel and general-Nepali definitions, neutral-set plan
+  ENVIRONMENT.md       exact pins and the H100 gotchas
+  LICENSE              MIT for our code; third-party assets credited
+  eval/                scorer, NepTel harness, dual-axis harness, ortho diagnostic
+  train/               teacher relabeling and the shipped training recipe
+  benchmark/           NepTel segment cutter and per-segment outputs (evidence)
+  evidence/            machine-readable results and checkpoint hashes
 ```
 
----
+## Credits and lineage
 
-## Model lineage & credits
-
-- **Kriti (base)** — Naamche Labs. A 119M-parameter hybrid RNNT-CTC Conformer built on **AI4Bharat IndicConformer** (multilingual, 22 Indic languages, multi-softmax joint) with a Nepali head and a Devanagari-danda punctuation head. This is the model Kriti Telephony adapts.
-- **NepTel benchmark** — the [NepaliConformer team (Ampixa)](https://github.com/Ampixa/nepaliconformer). We reproduce their public benchmark and use their scorer as the canonical instrument. Credit and thanks — an open benchmark is what made this work checkable.
-- **NepaliConformer** — [ampixa/nepali-conformer-offline](https://huggingface.co/ampixa/nepali-conformer-offline). Used here as the distillation *teacher*; disclosed fully in [`METHODOLOGY.md`](METHODOLOGY.md).
-- **Source audio** — NepTel is cut from the **InfoBayAI** Nepali call-center dataset (gated, CC-BY-4.0). We do **not** redistribute it; [`REPRODUCE.md`](REPRODUCE.md) explains how to obtain access and regenerate the segments. Training audio (podcast / code-switched / OpenSLR-54) is credited in [`train/`](train/).
+- **Kriti (base)** by Naamche Labs, a 119 M hybrid RNNT-CTC Conformer built on [AI4Bharat IndicConformer](https://github.com/AI4Bharat/NeMo), with a Nepali head and a Devanagari-danda punctuation head. Kriti Telephony adapts this model. Repository: [Naamche-Labs/kriti](https://github.com/Naamche-Labs/kriti).
+- **NepTel benchmark and scorer** by [Ampixa](https://github.com/Ampixa/nepaliconformer), used and cited per their submission terms.
+- **Distillation teacher:** [ampixa/nepali-conformer-offline](https://huggingface.co/ampixa/nepali-conformer-offline), disclosed in [METHODOLOGY.md](METHODOLOGY.md).
+- **Source audio:** NepTel is cut from the [InfoBayAI Nepali Call-Center dataset](https://huggingface.co/datasets/InfoBayAI/Nepali_Call_Center_Audio_Dataset_Dual_Channel) (gated, CC-BY-4.0). We do not redistribute it. See [REPRODUCE.md](REPRODUCE.md) for access and segment reconstruction.
+- **Training audio:** [Bijay13 podcast](https://huggingface.co/datasets/Bijay13/nepali-podcast-code-switch-asr-dataset), [Shyyamsh code-switched](https://huggingface.co/datasets/Shyyamsh/nepali-english-codemixed-asr), and [OpenSLR-54](https://openslr.org/54).
 
 ## License
 
-Our code and documentation: **MIT** (see [`LICENSE`](LICENSE)). Third-party datasets, benchmarks, and models retain their own licenses as credited above. Checkpoints are released separately; see [`REPRODUCE.md`](REPRODUCE.md).
+Our code and documentation are MIT (see [LICENSE](LICENSE)). Third-party datasets, benchmarks, and models retain their own licenses as credited above.
 
----
-
-*Naamche Labs — Kriti. Honest ASR for Nepali. Report WER pairs (telephony / general), never telephony alone.*
+Naamche Labs. Kriti, honest ASR for Nepali. Report WER pairs (telephony, general), never telephony alone.

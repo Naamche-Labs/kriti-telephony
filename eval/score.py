@@ -15,7 +15,7 @@ Usage:
     python eval/score.py --hyp <file> --refs ../nepaliconformer/benchmark/references.json
 
 A hypothesis file is a JSON list: [{"seg": "seg_0000.wav", "text": "..."}, ...]
-No GPU or model required — this scores committed per-segment outputs directly.
+No GPU or model required, this scores committed per-segment outputs directly.
 """
 import argparse, json, os, sys
 
