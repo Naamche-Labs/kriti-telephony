@@ -18,6 +18,16 @@ Scores in this repo:
 | Kriti (base) | 40.51 |
 | **Kriti Telephony** | **32.38** |
 
+### NepTel 0.2
+
+[NepTel 0.2](https://github.com/Ampixa/nepaliconformer/tree/master/benchmark) replaces the Chirp-2-drafted references with references corrected by a human against the audio (78 segments, 8 kHz).
+
+| System | NepTel 0.2 WER |
+|---|---:|
+| Kriti Telephony | 37.89 |
+
+Output file: `benchmark/outputs/kriti-telephony.neptel-0.2.json` (released checkpoint, decoded by the NepTel authors). Reproduce with the benchmark's `eval/score_v02.py`.
+
 ## General Nepali (the honesty check)
 
 - **What:** 200 held-out clips of clean read Nepali from OpenSLR-54, with human reference transcripts (not model-generated). Independent of NepTel and of any ASR model's label style.
