@@ -20,13 +20,30 @@ Scores in this repo:
 
 ### NepTel 0.2
 
-[NepTel 0.2](https://github.com/Ampixa/nepaliconformer/tree/master/benchmark) replaces the Chirp-2-drafted references with references corrected by a human against the audio (78 segments, 8 kHz).
+[NepTel 0.2](https://github.com/Ampixa/rani-asr/tree/master/benchmark) replaces the Chirp-2-drafted references with references corrected by a human against the audio (78 segments, 2,647 words, 8 kHz). Scored with the benchmark's own `eval/score_v02.py`.
 
-| System | NepTel 0.2 WER |
-|---|---:|
-| Kriti Telephony | 37.89 |
+| System | Decoding | NepTel 0.2 WER |
+|---|---|---:|
+| **Kriti Telephony v2** | beam search, width 4 | **32.49** |
+| Kriti Telephony v2 | greedy | 33.09 |
+| Rani (Ampixa Labs), published output | greedy, no language model | 33.51 |
+| Kriti Telephony v1 | greedy | 37.89 |
 
-Output file: `benchmark/outputs/kriti-telephony.neptel-0.2.json` (released checkpoint, decoded by the NepTel authors). Reproduce with the benchmark's `eval/score_v02.py`.
+Output files, re-scorable on CPU with no model:
+
+- `benchmark/outputs/kriti-telephony-v2.beam4.neptel-0.2.json` (32.49)
+- `benchmark/outputs/kriti-telephony-v2.greedy.neptel-0.2.json` (33.09)
+- `benchmark/outputs/kriti-telephony.neptel-0.2.json` (37.89, v1 released checkpoint, decoded by the NepTel authors)
+
+```bash
+python eval/score_v02.py --hyp benchmark/outputs/kriti-telephony-v2.beam4.neptel-0.2.json
+```
+
+Notes, stated plainly:
+
+- The v2 numbers were decoded on the AI4Bharat NeMo fork (`ENVIRONMENT.md`), the runtime Kriti is trained in. Beam search is NeMo's `maes` with beam size 4 and no language model (`train/v2/decode_lm.py`). Decoding the same checkpoint in mainline NeMo 3.0 after reducing it to a plain Nepali RNNT gives 33.62 greedy and 33.47 beam; small numerical differences between the two runtimes move about half a point on this 78-segment set.
+- Paired segment bootstrap, Kriti Telephony v2 (beam) minus Rani: -1.0 points, 95% interval (-3.0, +1.0). Kriti v2 has the lower error, and the interval still includes zero.
+- On the 56 real customer-support calls v2 scores 30.28 (Rani 30.39); on the 22 voice-assistant segments it scores 36.85 (Rani 39.66).
 
 ## General Nepali (the honesty check)
 
